@@ -6,21 +6,22 @@ export default function Register() {
   const [sector, setSector] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("");
   const navigate = useNavigate();
 
   async function handleRegister(e) {
     e.preventDefault();
 
-    if (name !== "" && sector !== "" && email !== "" && password !== "") {
-      await fetch("http://localhost:3000/register", {
+    if (name !== "" && sector !== "" && email !== "" && password !== "" && role != "") {
+      await fetch("http://localhost:3000/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, sector, email, password }),
+        body: JSON.stringify({ name, sector, email, password, role }),
       })
         .then(() => {
-          navigate("/homePage", { replace: true });
+          navigate("/dashboard", { replace: true });
         })
         .catch((error) => {
           alert(error);
@@ -71,7 +72,13 @@ export default function Register() {
             onChange={(e) => setPassword(e.target.value)}
             className="p-3 rounded-md bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-
+<input
+            type="text"
+            placeholder="Digite o tipo de usuario"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="p-3 rounded-md bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
           <button
             type="submit"
             className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-md transition-all duration-200"
