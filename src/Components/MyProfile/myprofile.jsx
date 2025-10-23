@@ -1,11 +1,16 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "../../assets/Image.jpg";
 import { TbPencilMinus } from "react-icons/tb";
+import { authService } from "../../services/auth.service";
 
 export default function MyProfile() {
   const [notificacoes, setNotificacoes] = useState(true);
-
+  const [user, setUser] = useState("")
+  useEffect(() => {
+    const userData = authService.getUser();
+    setUser(userData);
+  }, []);
   return (
     <div>
       <header>
@@ -22,9 +27,9 @@ export default function MyProfile() {
           />
           <div className="pl-[20px]">
             <h3 className="text-[#434966] text-[16px] font-bold">
-              Larissa Emily
+             {user.name}
             </h3>
-            <p className="text-[#82889c]">Gestora de Projetos</p>
+            <p className="text-[#82889c]">{user.sector}</p>
           </div>
         </div>
         <div>
@@ -50,19 +55,13 @@ export default function MyProfile() {
             {/* Nome */}
             <div>
               <p className="text-[#9CA3AF]">Nome</p>
-              <p className="text-[#1F2937] font-medium">Stavn dux</p>
-            </div>
-
-            {/* Data de nascimento */}
-            <div>
-              <p className="text-[#9CA3AF]">Data de nascimento</p>
-              <p className="text-[#1F2937] font-medium">03/04/1996</p>
+              <p className="text-[#1F2937] font-medium">{user.name}</p>
             </div>
 
             {/* Função */}
             <div>
               <p className="text-[#9CA3AF]">Função</p>
-              <p className="text-[#1F2937] font-medium">Desenvolvedor</p>
+              <p className="text-[#1F2937] font-medium">{user.sector}</p>
             </div>
 
             {/* Telefone */}
@@ -74,13 +73,18 @@ export default function MyProfile() {
             {/* E-mail */}
             <div>
               <p className="text-[#9CA3AF]">E-mail</p>
-              <p className="text-[#1F2937] font-medium">larissa@email.com</p>
+              <p className="text-[#1F2937] font-medium">{user.email}</p>
             </div>
 
             {/* Setor */}
             <div>
               <p className="text-[#9CA3AF]">Setor</p>
-              <p className="text-[#1F2937] font-medium">Tecnologia</p>
+              <p className="text-[#1F2937] font-medium">{user.sector}</p>
+            </div>
+            {/* Tipo de usuario */}
+            <div>
+              <p className="text-[#9CA3AF]">Tipo de usuario</p>
+              <p className="text-[#1F2937] font-medium">{user.role}</p>
             </div>
           </div>
         </div>

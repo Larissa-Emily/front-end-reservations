@@ -8,6 +8,7 @@ import Layout from "../layouts/layout";
 import Calendar from "../pages/Calendar";
 import Profile from "../pages/Profile";
 import Reserve from "../pages/Reserve";
+import User from "../pages/User";
 
 export default function RoutesApp() {
   return (
@@ -22,6 +23,7 @@ export default function RoutesApp() {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/reserve" element={<Reserve />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/user" element={<User />} />
       </Route>
     </Routes>
   );

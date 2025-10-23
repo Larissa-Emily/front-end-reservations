@@ -1,29 +1,49 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { authService } from "../../services/auth.service";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ Adiciona loading
   const navigate = useNavigate();
 
   async function handleLogin(e) {
-    e.preventDefault();
-    if (email !== "" && password !== "") {
-      const response = await fetch("http://localhost:3001/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "string", password: "string" }),
-      });
-      if (response.ok) {
-        alert("Login realizado com sucesso!");
-        navigate("/homePage");
-      } else {
-        alert("Usuario ou senha incorretos!");
-      }
-    } else {
-      alert("Preencha todos os campos!");
-    }
+  e.preventDefault();
+  
+  console.log('1. Iniciando login...');
+  
+  if (email === "" || password === "") {
+    alert("Preencha todos os campos!");
+    return;
   }
+
+  setLoading(true);
+
+  try {
+    console.log('2. Chamando authService.login...');
+    const token = await authService.login(email, password);
+    console.log('3. Token recebido:', token);
+    
+    console.log('4. Pegando ID do usuário...');
+    const userId = authService.getUserId();
+    console.log('5. ID do usuário:', userId);
+    
+    console.log('6. Navegando para dashboard...');
+    navigate("/dashboard");
+    console.log('7. Navegação concluída');
+    
+  } catch (error) {
+    console.error('❌ ERRO:', error);
+    console.error('❌ Mensagem:', error.message);
+    console.error('❌ Stack:', error.stack);
+    alert("Usuário ou senha incorretos!");
+  } finally {
+    console.log('8. Finalizando...');
+    setLoading(false);
+  }
+}
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0e4986]">
@@ -35,24 +55,29 @@ export default function Login() {
 
         <form className="flex flex-col space-y-4" onSubmit={handleLogin}>
           <input
-            type="text"
+            type="email"
             placeholder="Digite seu e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="p-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            disabled={loading}
+            className="p-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50"
           />
+
           <input
             type="password"
             placeholder="Digite sua senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="p-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            disabled={loading}
+            className="p-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50"
           />
+
           <button
             type="submit"
-            className="p-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-all duration-200"
+            disabled={loading}
+            className="p-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Acessar
+            {loading ? "Carregando..." : "Acessar"}
           </button>
         </form>
 
