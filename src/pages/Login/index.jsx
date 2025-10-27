@@ -5,45 +5,29 @@ import { authService } from "../../services/auth.service";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false); // ✅ Adiciona loading
+  const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
 
   async function handleLogin(e) {
-  e.preventDefault();
-  
-  console.log('1. Iniciando login...');
-  
-  if (email === "" || password === "") {
-    alert("Preencha todos os campos!");
-    return;
+    e.preventDefault();
+
+    if (email === "" || password === "") {
+      alert("Preencha todos os campos!");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await authService.login(email, password);
+      navigate("/dashboard");
+    } catch (error) {
+      alert("Usuário ou senha incorretos!");
+    } finally {
+      setLoading(false);
+    }
   }
-
-  setLoading(true);
-
-  try {
-    console.log('2. Chamando authService.login...');
-    const token = await authService.login(email, password);
-    console.log('3. Token recebido:', token);
-    
-    console.log('4. Pegando ID do usuário...');
-    const userId = authService.getUserId();
-    console.log('5. ID do usuário:', userId);
-    
-    console.log('6. Navegando para dashboard...');
-    navigate("/dashboard");
-    console.log('7. Navegação concluída');
-    
-  } catch (error) {
-    console.error('❌ ERRO:', error);
-    console.error('❌ Mensagem:', error.message);
-    console.error('❌ Stack:', error.stack);
-    alert("Usuário ou senha incorretos!");
-  } finally {
-    console.log('8. Finalizando...');
-    setLoading(false);
-  }
-}
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0e4986]">
@@ -80,16 +64,6 @@ export default function Login() {
             {loading ? "Carregando..." : "Acessar"}
           </button>
         </form>
-
-        <Link
-          className="text-blue-200 mt-4 inline-block hover:text-white transition-colors duration-200"
-          to="/register"
-        >
-          Não possui uma conta?
-          <span className="text-[#048bd2] hover:text-[#02a7ff] m-1">
-            Cadastra-se
-          </span>
-        </Link>
       </div>
     </div>
   );

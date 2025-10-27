@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useState, useEffect } from "react";
 import SearchBarUser from "../../Components/SearchBarUser";
+import ModalRegister from "../../Components/Modal";
+import ModalConfirm from "../../Components/ModalConfirm";
 import { authService } from "../../services/auth.service";
 
 export default function User() {
@@ -7,7 +10,13 @@ export default function User() {
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Busca inicial dos usuários
+  // Estados dos modais
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  // Usuário selecionado pra editar/deletar
+  const [selectedUser, setSelectedUser] = useState(null);
+
   useEffect(() => {
     fetchUsuarios();
   }, []);
@@ -15,43 +24,69 @@ export default function User() {
   async function fetchUsuarios() {
     try {
       setLoading(true);
-      const response = await authService.fetch('/user');
+      const response = await authService.fetch("/user");
+
+      if (!response.ok) {
+        throw new Error("Erro ao buscar usuários");
+      }
+
       const data = await response.json();
-      
       setUsuarios(data);
       setFilteredUsuarios(data);
     } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
+      alert("Erro ao carregar usuários!");
     } finally {
       setLoading(false);
     }
   }
 
-  // ✅ Função de busca/filtro
-  function handleSearch({ name, email }) {
+  function handleSearch(filters) {
     let filtered = usuarios;
 
-    // Filtra por nome
-    if (name) {
-      filtered = filtered.filter(user => 
-        user.name.toLowerCase().includes(name.toLowerCase())
+    if (filters.name) {
+      filtered = filtered.filter((user) =>
+        user.name.toLowerCase().includes(filters.name.toLowerCase())
       );
     }
 
-    // Filtra por email
-    if (email) {
-      filtered = filtered.filter(user => 
-        user.email.toLowerCase().includes(email.toLowerCase())
+    if (filters.email) {
+      filtered = filtered.filter((user) =>
+        user.email.toLowerCase().includes(filters.email.toLowerCase())
       );
     }
 
     setFilteredUsuarios(filtered);
   }
 
+  //  modal de confirmar exclusão
+  function handleDeleteClick(user) {
+    setSelectedUser(user);
+    setIsDeleteOpen(true);
+  }
+
+  //  Deleta o usuário
+  async function handleDelete() {
+    try {
+      const response = await authService.fetch(`/user/${selectedUser.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao deletar usuário");
+      }
+
+      alert("Usuário deletado com sucesso!");
+      fetchUsuarios(); // Atualiza a lista
+    } catch (error) {
+      console.error("Erro ao deletar:", error);
+      alert("Erro ao deletar usuário!");
+    }
+  }
+
   if (loading) {
     return (
-      <div className="p-8">
-        <p className="text-gray-600">Carregando...</p>
+      <div className="p-8 flex items-center justify-center min-h-screen">
+        <p className="text-gray-600 text-lg">Carregando usuários...</p>
       </div>
     );
   }
@@ -59,20 +94,30 @@ export default function User() {
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       {/* Cabeçalho */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Gerenciar Usuários</h1>
-        <p className="text-gray-600 mt-1">
-          {filteredUsuarios.length} usuário(s) encontrado(s)
-        </p>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Gerenciar Usuários
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {filteredUsuarios.length} usuário(s) encontrado(s)
+          </p>
+        </div>
       </div>
 
       {/* Barra de Busca */}
       <SearchBarUser onSearch={handleSearch} />
-    <div>
-    <button>Novo usuário</button>
-    </div>
-      {/* Lista de Usuários */}
-      <div className="mt-6 bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="flex justify-end p-[20px]">
+        <button
+          onClick={() => setIsRegisterOpen(true)}
+          className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 "
+        >
+          + Novo 
+        </button>
+      </div>
+
+      {/* Tabela de Usuários */}
+      <div className="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
@@ -86,7 +131,7 @@ export default function User() {
                 Setor
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Função
+                Tipo de usuário
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ações
@@ -102,7 +147,10 @@ export default function User() {
               </tr>
             ) : (
               filteredUsuarios.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={user.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {user.name}
@@ -115,19 +163,26 @@ export default function User() {
                     <div className="text-sm text-gray-600">{user.sector}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.role === 'manager' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {user.role === 'manager' ? 'Gerente' : 'Usuário'}
+                    <span
+                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.role === "manager"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {user.role === "manager" ? "Gerente" : "Usuário"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button className="text-blue-600 hover:text-blue-800 mr-3">
+                    <button className="text-blue-600 hover:text-blue-800 font-medium mr-4 transition-colors">
                       Editar
                     </button>
-                    <button className="text-red-600 hover:text-red-800">
+
+                    {/* ✅ Botão Deletar */}
+                    <button
+                      onClick={() => handleDeleteClick(user)}
+                      className="text-red-600 hover:text-red-800 font-medium transition-colors"
+                    >
                       Excluir
                     </button>
                   </td>
@@ -137,6 +192,29 @@ export default function User() {
           </tbody>
         </table>
       </div>
+
+      {/* ✅ Modal de Cadastro */}
+      <ModalRegister
+        isOpen={isRegisterOpen}
+        onClose={() => {
+          setIsRegisterOpen(false);
+          fetchUsuarios();
+        }}
+      />
+
+      {/* ✅ Modal de Confirmação de Exclusão */}
+      {selectedUser && (
+        <ModalConfirm
+          isOpen={isDeleteOpen}
+          onClose={() => {
+            setIsDeleteOpen(false);
+            setSelectedUser(null);
+          }}
+          onConfirm={handleDelete}
+          title="Confirmar Exclusão"
+          message={`Tem certeza que deseja excluir o usuário "${selectedUser.name}"? Esta ação não pode ser desfeita.`}
+        />
+      )}
     </div>
   );
 }

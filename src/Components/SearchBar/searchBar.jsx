@@ -1,56 +1,99 @@
+import React, { useState } from "react";
+import { FiSearch, FiMapPin, FiUsers } from "react-icons/fi"; // Removi FiCalendar, pois não está sendo usado
 
-import React from "react";
-import { FiSearch, FiMapPin, FiUsers, FiCalendar } from "react-icons/fi";
+export default function SearchBar({ onSearch }) { // ← CORRIGIDO: onSearch
+  const [name, setName] = useState("");
+  const [capacity, setCapacity] = useState("");
+  const [characteristics, setCharacteristics] = useState("");
+  const [location, setLocation] = useState("");
 
-export default function SearchBar() {
+  function handleSearch(e) {
+    e.preventDefault();
+    // ✅ Chama a função de busca passando os filtros
+    onSearch({ name, capacity, characteristics, location });
+  }
+
+  function handleClear() {
+    setName("");
+    setCapacity("");
+    setCharacteristics("");
+    setLocation("");
+    // ✅ Chama a função de busca com filtros vazios para limpar
+    onSearch({ name: "", capacity: "", characteristics: "", location: "" });
+  }
+
+  // Verifica se algum campo de filtro está preenchido para mostrar o botão "Limpar"
+  const hasFilters = name || capacity || characteristics || location;
+
   return (
-    <div className="flex items-center bg-white shadow-md rounded-full px-4 py-2 w-[900px] mx-auto">
-      {/* Nome da sala */}
-      <div className="flex items-center gap-2 px-4">
-        <FiSearch className="text-gray-400" />
-        <input
-          type="text"
-          placeholder="Nome da sala"
-          className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
-        />
-      </div>
-
-      <div className="h-6 w-px bg-gray-300" />
-
-      {/* Características */}
-      <div className="flex items-center gap-2 px-4">
-        <FiMapPin className="text-gray-400" />
-        <span className="text-gray-500">Características</span>
-      </div>
-
-      <div className="h-6 w-px bg-gray-300" />
-
-      {/* Local */}
-      <div className="flex items-center gap-2 px-4">
-        <FiMapPin className="text-gray-400" />
-        <span className="text-gray-500">Local</span>
-      </div>
-
-      <div className="h-6 w-px bg-gray-300" />
-
-      {/* Capacidade */}
-      <div className="flex items-center gap-2 px-4">
-        <FiUsers className="text-gray-400" />
-        <span className="text-gray-500">Capacidade</span>
-      </div>
-
-      <div className="h-6 w-px bg-gray-300" />
-
-      {/* Data */}
-      <div className="flex items-center gap-2 px-4">
-        <FiCalendar className="text-gray-400" />
-        <span className="text-gray-500">Data</span>
-      </div>
-
-      {/* Botão */}
-      <button className="ml-4 bg-[#3b8ea5] text-white px-6 py-2 rounded-full hover:bg-[#327c92] transition">
-        Buscar
-      </button>
+    <div>
+      <form
+        onSubmit={handleSearch}
+        className="flex flex-wrap items-center bg-white shadow-md rounded-full px-4 py-2 w-full justify-between"
+      >
+        {/* Nome da sala */}
+        <div className="flex items-center gap-2 px-4">
+          <FiSearch className="text-gray-400" />
+          <input
+            type="text"
+            placeholder="Nome da sala"
+            value={name}
+            onChange={(e) => setName(e.target.value)} // ← ADICIONADO onChange
+            className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
+          />
+        </div>
+        {/* Características (Assumindo que isso se refere à descrição da sala) */}
+        <div className="flex items-center gap-2 px-4">
+          <FiSearch className="text-gray-400" /> {/* Mudei para FiSearch, FiMapPin já está em Local */}
+          <input
+            type="text"
+            placeholder="Características"
+            value={characteristics}
+            onChange={(e) => setCharacteristics(e.target.value)} // ← ADICIONADO onChange
+            className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
+          />
+        </div>
+        {/* Local */}
+        <div className="flex items-center gap-2 px-4">
+          <FiMapPin className="text-gray-400" />
+          <input
+            type="text"
+            placeholder="Local"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)} // ← ADICIONADO onChange
+            className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
+          />
+        </div>
+        {/* Capacidade */}
+        <div className="flex items-center gap-2 px-4">
+          <FiUsers className="text-gray-400" />
+          <input
+            type="number" // ← Mudei para type="number" para melhor UX
+            placeholder="Capacidade"
+            value={capacity}
+            onChange={(e) => setCapacity(e.target.value)} // ← ADICIONADO onChange
+            className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="flex items-center gap-2 px-6 py-2 w-[113px] bg-[#3B9AB8] text-white font-medium rounded-lg hover:bg-[#056e8e]transition-colors cursor-pointer"
+          >
+            <FiSearch className="text-lg" />
+            Buscar
+          </button>
+          {hasFilters && ( // ← MOSTRA O BOTÃO LIMPAR APENAS SE HOUVER FILTROS
+            <button
+              type="button"
+              onClick={handleClear}
+              className="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Limpar
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }
