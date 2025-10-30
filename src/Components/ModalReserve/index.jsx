@@ -1,11 +1,16 @@
-// src/components/ModalReserve/index.jsx
 import React, { useState, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
-import { reservationService } from "../../services/reserve.service"; // ← CAMINHO CORRETO para o serviço de reserva
-import { roomService } from "../../services/room.service"; // ← CAMINHO CORRETO para o serviço de sala
-import { authService } from "../../services/auth.service";
+import { toast } from "react-toastify";
 
-export default function ModalReservation({ isOpen, onClose, reservationToEdit, onSave }) {
+export default function ModalReservation({
+  isOpen,
+  onClose,
+  reservationToEdit,
+  onSave,
+}) {
+  const token = localStorage.getItem("access_token");
+  const user = JSON.parse(localStorage.getItem("user"));
+
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -15,13 +20,13 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
   const [error, setError] = useState(null);
   const [loadingRooms, setLoadingRooms] = useState(false);
 
-  const currentUserId = authService.getUserFromStorage()?.id;
+  const currentUserId = user?.id;
 
   useEffect(() => {
     if (isOpen) {
       loadAvailableRooms();
       if (reservationToEdit) {
-        setDate(reservationToEdit.date.split('T')[0]);
+        setDate(reservationToEdit.date.split("T")[0]);
         setStartTime(reservationToEdit.startTime);
         setEndTime(reservationToEdit.endTime);
         setRoomId(reservationToEdit.roomId.toString());
@@ -38,11 +43,23 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
   const loadAvailableRooms = async () => {
     setLoadingRooms(true);
     try {
-      const availableRooms = await roomService.getAvailableRooms();
-      setRooms(availableRooms);
+      const availableRooms = await fetch(
+        `http://localhost:3000/room/available`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!availableRooms.ok) {
+        throw new Error("Erro ao buscar as salas disponiveis!");
+      }
+      const data = await availableRooms.json();
+      setRooms(data);
     } catch (error) {
-      console.error("❌ Erro ao carregar salas disponíveis:", error);
-      setError("Erro ao carregar salas disponíveis.");
+      setError(error);
     } finally {
       setLoadingRooms(false);
     }
@@ -77,12 +94,15 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
     }
 
     if (!currentUserId) {
-      setError("ID do usuário não encontrado. Por favor, faça login novamente.");
+      setError(
+        "ID do usuário não encontrado. Por favor, faça login novamente."
+      );
       setLoading(false);
       return;
     }
 
     setLoading(true);
+    
     const reservationData = {
       date,
       startTime,
@@ -94,17 +114,68 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
     try {
       let result;
       if (reservationToEdit) {
-        result = await reservationService.updateReservation(reservationToEdit.id, reservationData);
-        alert("Reserva atualizada com sucesso!");
+        result = await fetch(
+          `http://localhost:3000/reservation/${reservationToEdit.id}`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(reservationData),
+          }
+        );
+
+        if (!result.ok) {
+          const errorData = await result.json();
+
+          // Se o backend retornar 409 (Conflict)
+          if (result.status === 409) {
+            setError(
+              errorData.message || "Essa sala já está reservada nesse horário."
+            );
+            toast.error("Essa sala já está reservada nesse horário!");
+            setLoading(false);
+            return;
+          }
+
+          throw new Error(errorData.message || "Erro ao criar reserva");
+        }
+        toast.success("Reserva atualizada com sucesso!");
       } else {
-        result = await reservationService.createReservation(reservationData);
-        alert("Reserva criada com sucesso!");
+        result = await fetch(`http://localhost:3000/reservation`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(reservationData),
+        });
+
+        if (!result.ok) {
+          const errorData = await result.json();
+
+          // Se o backend retornar 409 (Conflict)
+          if (result.status === 409) {
+            setError(
+              errorData.message || "Essa sala já está reservada nesse horário."
+            );
+            toast.error("Essa sala já está reservada nesse horário!");
+            setLoading(false);
+            return;
+          }
+
+          throw new Error(errorData.message || "Erro ao criar reserva");
+        }
+
+        toast.success("Reserva criada com sucesso!");
       }
-      onSave(result);
+      const responseData = await result.json();
+      onSave(responseData);
       onClose();
     } catch (err) {
-      console.error("❌ Erro ao salvar reserva:", err);
       setError(err.message || "Erro ao salvar reserva.");
+      toast.error("Erro ao salvar a reserva.");
     } finally {
       setLoading(false);
     }
@@ -114,19 +185,16 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
 
   return (
     <>
-      {/* Overlay (fundo escuro) */}
       <div
         className="fixed inset-0 bg-[#0e48868f] bg-opacity-50 z-40"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <div className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl w-full max-w-lg text-center border border-white/20 relative">
-          {/* Botão fechar */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-[#7a7d84] hover:text-white transition-colors"
+            className="absolute top-4 right-4 text-white hover:text-white transition-colors cursor-pointer"
           >
             <IoClose className="text-2xl" />
           </button>
@@ -134,14 +202,14 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
           <h1 className="text-3xl font-bold text-white mb-2">
             {reservationToEdit ? "Editar Reserva" : "Nova Reserva"}
           </h1>
-          <span className="text-[#7a7d84] text-sm mb-6 block">
-            {reservationToEdit ? "Atualize os dados da reserva" : "Preencha os dados da nova reserva"}
+          <span className="text-white text-sm mb-6 block">
+            {reservationToEdit
+              ? "Atualize os dados da reserva"
+              : "Preencha os dados da nova reserva"}
           </span>
 
           {error && (
-            <div className="bg-red-500 text-white p-2 rounded-md mb-4">
-              {error}
-            </div>
+            <div className="text-red-500 p-2 rounded-md mb-4">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -151,18 +219,17 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
               value={date}
               onChange={(e) => setDate(e.target.value)}
               disabled={loading}
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
               className="p-3 rounded-md bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
             />
 
-            {/* Horário de Início */}
             <div className="flex gap-2">
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 disabled={loading}
-                className="flex-1 p-3 rounded-md bg-[#ffffff79] text-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+                className="flex-1 p-3 rounded-md bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
               />
               <span className="text-white self-center">até</span>
               <input
@@ -170,25 +237,30 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 disabled={loading}
-                className="flex-1 p-3 rounded-md bg-[#ffffff79] text-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+                className="flex-1 p-3 rounded-md bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
               />
             </div>
 
-            {/* Sala */}
             <div className="relative">
               <select
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value)}
                 disabled={loading || loadingRooms}
-                className="w-full p-3 rounded-md bg-[#a3a3a398] text-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+                className="w-full p-3 rounded-md bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 
+             [&>option]:text-black [&>option]:bg-white"
               >
                 <option value="">Selecione uma sala</option>
                 {loadingRooms ? (
                   <option disabled>Carregando salas...</option>
                 ) : (
                   rooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.name} ({room.capacity} pessoas) - {room.location || "N/A"}
+                    <option
+                      key={room.id}
+                      value={room.id}
+                      className=" bg-white/20 text-white"
+                    >
+                      {room.name} ({room.capacity} pessoas) -{" "}
+                      {room.location || "N/A"}
                     </option>
                   ))
                 )}
@@ -198,9 +270,13 @@ export default function ModalReservation({ isOpen, onClose, reservationToEdit, o
             <button
               type="submit"
               disabled={loading || loadingRooms || !currentUserId}
-              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {loading ? "Salvando..." : reservationToEdit ? "Atualizar Reserva" : "Criar Reserva"}
+              {loading
+                ? "Salvando..."
+                : reservationToEdit
+                ? "Atualizar Reserva"
+                : "Criar Reserva"}
             </button>
           </form>
         </div>

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { roomService } from "../../services/room.service";
-import { authService } from "../../services/auth.service";
 import ModalRoom from "../../Components/ModalRoom/index";
 import SearchBar from "../../Components/SearchBar/searchBar"; // ← CAMINHO CORRETO E IMPORTAÇÃO PADRÃO
+import { toast } from "react-toastify";
 
 export default function RoomList() {
   const [rooms, setRooms] = useState([]);
@@ -11,23 +10,40 @@ export default function RoomList() {
   const [isModalRoomOpen, setIsModalRoomOpen] = useState(false);
   const [roomToEdit, setRoomToEdit] = useState(null);
   const [filters, setFilters] = useState({
-    // ← NOVO ESTADO PARA MÚLTIPLOS FILTROS
     name: "",
     capacity: "",
     characteristics: "", // Mapeia para 'description' ou outra característica
     location: "",
   });
-
+  const token = localStorage.getItem("access_token");
+  const user = JSON.parse(localStorage.getItem("user"));
+  const currentUserRole = user?.role;
   useEffect(() => {
+    if (!token) {
+      console.warn("Nenhum token encontrado — usuário não autenticado.");
+      return;
+    }
     fetchRooms();
-  }, []);
+  }, [token]);
 
   const fetchRooms = async () => {
     setLoadingRooms(true);
     setErrorRooms(null);
+
     try {
-      const fetchedRooms = await roomService.getAllRooms();
-      setRooms(fetchedRooms);
+      const fetchedRooms = await fetch(`http://localhost:3000/room`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!fetchedRooms.ok) {
+        throw new Error("Erro ao buscar salas.");
+      }
+      const data = await fetchedRooms.json();
+      console.log("Recebendo as salas", +data);
+      setRooms(data);
     } catch (error) {
       console.error("❌ Erro ao buscar salas:", error);
       setErrorRooms(error.message || "Erro ao carregar salas.");
@@ -49,12 +65,23 @@ export default function RoomList() {
   const handleDeleteRoom = async (roomId) => {
     if (window.confirm("Tem certeza que deseja deletar esta sala?")) {
       try {
-        await roomService.deleteRoom(roomId);
-        alert("Sala deletada com sucesso!");
+        const response = await fetch(`http://localhost:3000/room/${roomId}`, {
+          // testada e funcionando - deleta as reservas que estao na sala
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          toast.error("Erro ao deletar sala!");
+          return;
+        }
+        toast.success("Sala deletada com sucesso!");
         fetchRooms();
       } catch (error) {
         console.error("❌ Erro ao deletar sala:", error);
-        alert(error.message || "Erro ao deletar sala.");
+        toast.error(error.message || "Erro ao deletar sala.");
       }
     }
   };
@@ -98,12 +125,12 @@ export default function RoomList() {
           {/* Passa a função handleSearch para o SearchBar */}
           <SearchBar onSearch={handleSearch} />
           <div className="flex justify-end">
-            {authService.isManager() && (
+            {currentUserRole === "manager" && (
               <button
                 onClick={handleOpenCreateRoomModal}
                 className="w-[113px] mt-10 mr-4 bg-[#3B9AB8] hover:bg-[#056e8e] text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 cursor-pointer"
               >
-                Nova Sala
+              Nova Sala
               </button>
             )}
           </div>
@@ -134,7 +161,7 @@ export default function RoomList() {
                   {room.location || "N/A"}
                 </p>
                 <p className="text-[14px] text-[#7a7d84] mb-1 ">
-                  <p>Capacidade: {room.capacity} pessoas</p>
+                  <span>Capacidade: {room.capacity} pessoas</span>
                 </p>
                 <p className="text-[14px] text-[#7a7d84] mb-4">
                   Status:
@@ -146,7 +173,7 @@ export default function RoomList() {
                     {room.isAvailable ? "Disponível" : "Indisponível"}
                   </span>
                 </p>
-                {authService.isManager() && (
+
                   <div className="flex justify-center gap-2 mt-4 ">
                     <button
                       onClick={() => handleOpenEditRoomModal(room)}
@@ -161,7 +188,6 @@ export default function RoomList() {
                       Deletar
                     </button>
                   </div>
-                )}
               </div>
             ))}
           </div>

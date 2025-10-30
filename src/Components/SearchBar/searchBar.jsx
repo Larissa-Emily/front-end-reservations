@@ -9,7 +9,6 @@ export default function SearchBar({ onSearch }) { // ← CORRIGIDO: onSearch
 
   function handleSearch(e) {
     e.preventDefault();
-    // ✅ Chama a função de busca passando os filtros
     onSearch({ name, capacity, characteristics, location });
   }
 
@@ -18,7 +17,6 @@ export default function SearchBar({ onSearch }) { // ← CORRIGIDO: onSearch
     setCapacity("");
     setCharacteristics("");
     setLocation("");
-    // ✅ Chama a função de busca com filtros vazios para limpar
     onSearch({ name: "", capacity: "", characteristics: "", location: "" });
   }
 
@@ -38,29 +36,27 @@ export default function SearchBar({ onSearch }) { // ← CORRIGIDO: onSearch
             type="text"
             placeholder="Nome da sala"
             value={name}
-            onChange={(e) => setName(e.target.value)} // ← ADICIONADO onChange
+            onChange={(e) => setName(e.target.value)} 
             className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
           />
         </div>
-        {/* Características (Assumindo que isso se refere à descrição da sala) */}
         <div className="flex items-center gap-2 px-4">
-          <FiSearch className="text-gray-400" /> {/* Mudei para FiSearch, FiMapPin já está em Local */}
+          <FiSearch className="text-gray-400" /> 
           <input
             type="text"
             placeholder="Características"
             value={characteristics}
-            onChange={(e) => setCharacteristics(e.target.value)} // ← ADICIONADO onChange
+            onChange={(e) => setCharacteristics(e.target.value)} 
             className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
           />
         </div>
-        {/* Local */}
         <div className="flex items-center gap-2 px-4">
           <FiMapPin className="text-gray-400" />
           <input
             type="text"
             placeholder="Local"
             value={location}
-            onChange={(e) => setLocation(e.target.value)} // ← ADICIONADO onChange
+            onChange={(e) => setLocation(e.target.value)} 
             className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
           />
         </div>
@@ -68,10 +64,10 @@ export default function SearchBar({ onSearch }) { // ← CORRIGIDO: onSearch
         <div className="flex items-center gap-2 px-4">
           <FiUsers className="text-gray-400" />
           <input
-            type="number" // ← Mudei para type="number" para melhor UX
+            type="number" 
             placeholder="Capacidade"
             value={capacity}
-            onChange={(e) => setCapacity(e.target.value)} // ← ADICIONADO onChange
+            onChange={(e) => setCapacity(e.target.value)} 
             className="outline-none placeholder-gray-400 text-gray-700 w-[130px]"
           />
         </div>
@@ -83,7 +79,7 @@ export default function SearchBar({ onSearch }) { // ← CORRIGIDO: onSearch
             <FiSearch className="text-lg" />
             Buscar
           </button>
-          {hasFilters && ( // ← MOSTRA O BOTÃO LIMPAR APENAS SE HOUVER FILTROS
+          {hasFilters && (
             <button
               type="button"
               onClick={handleClear}

@@ -16,6 +16,18 @@ export interface Room {
 export interface User {
   id: number;
   name: string;
+  functionUser: string;
+  phone: string;
+  email: string;
+  sector: string;
+  role: string;
+}
+
+export interface UserData {
+  id: number;
+  name: string;
+  functionUser: string;
+  phone: string;
   email: string;
   sector: string;
   role: string;

@@ -1,72 +1,38 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { CiCalendar } from "react-icons/ci";
 import { LuCircleUser } from "react-icons/lu";
 import { GiConversation } from "react-icons/gi";
 
-export default function SideMenuManager({ isOpen }) {
+export default function SideMenuManager() {
+  const location = useLocation();
+
+  const menuItems = [
+    { to: "/dashboard", label: "Dashboard", icon: <RxDashboard className="text-xl" /> },
+    { to: "/reserve", label: "Reservas", icon: <CiCalendar className="text-xl" /> },
+    { to: "/user", label: "Usuários", icon: <LuCircleUser className="text-xl" /> },
+    { to: "/room", label: "Salas", icon: <GiConversation className="text-xl" /> },
+    { to: "/profile", label: "Perfil", icon: <LuCircleUser className="text-xl" /> },
+  ];
+
   return (
-    <ul className="space-y-2">
-      <li>
-        <Link
-          to="/dashboard"
-          className="flex items-center gap-3 text-[#7e7e7e] hover:text-white hover:bg-[#3b9abb] p-3 rounded-lg transition-colors"
-        >
-          <RxDashboard className="text-xl flex-shrink-0" />
-          {isOpen && <span>Dashboard</span>}
-        </Link>
-      </li>
-
-      <li>
-        <Link
-          to="/calendar"
-          className="flex items-center gap-3 text-[#7e7e7e] hover:text-white hover:bg-[#3b9abb] p-3 rounded-lg transition-colors"
-        >
-          <CiCalendar className="text-xl flex-shrink-0" />
-          {isOpen && <span>Calendário</span>}
-        </Link>
-      </li>
-
-      <li>
-        <Link
-          to="/reserve"
-          className="flex items-center gap-3 text-[#7e7e7e] hover:text-white hover:bg-[#3b9abb] p-3 rounded-lg transition-colors"
-        >
-          <CiCalendar className="text-xl flex-shrink-0" />
-          {isOpen && <span>Reservas</span>}
-        </Link>
-      </li>
-
-      <li>
-        <Link
-          to="/user"
-          className="flex items-center gap-3 text-[#7e7e7e] hover:text-white hover:bg-[#3b9abb] p-3 rounded-lg transition-colors"
-        >
-          <LuCircleUser className="text-xl flex-shrink-0" />
-          {isOpen && <span>Usuários</span>}
-        </Link>
-      </li>
-
-      <li>
-        <Link
-          to="/room"
-          className="flex items-center gap-3 text-[#7e7e7e] hover:text-white hover:bg-[#3b9abb] p-3 rounded-lg transition-colors"
-        >
-          <GiConversation className="text-xl flex-shrink-0" />
-          {isOpen && <span>Salas</span>}
-        </Link>
-      </li>
-
-      <li>
-        <Link
-          to="/profile"
-          className="flex items-center gap-3 text-[#7e7e7e] hover:text-white hover:bg-[#3b9abb] p-3 rounded-lg transition-colors"
-        >
-          <LuCircleUser className="text-xl flex-shrink-0" />
-          {isOpen && <span>Perfil</span>}
-        </Link>
-      </li>
+    <ul className="space-y-4">
+      {menuItems.map((item) => (
+        <li key={item.to}>
+          <Link
+            to={item.to}
+            className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+              location.pathname === item.to
+                ? "bg-[#3b9abb] text-white"
+                : "text-[#7E7E7E] hover:text-white hover:bg-[#3b9abb]"
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </Link>
+        </li>
+      ))}
     </ul>
   );
 }

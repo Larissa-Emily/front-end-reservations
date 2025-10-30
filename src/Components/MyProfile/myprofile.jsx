@@ -2,15 +2,76 @@ import React from "react";
 import { useState, useEffect } from "react";
 import Image from "../../assets/Image.jpg";
 import { TbPencilMinus } from "react-icons/tb";
-import { authService } from "../../services/auth.service";
-
+import ModalUser from "../../Components/ModalUser/index";
 export default function MyProfile() {
-  const [notificacoes, setNotificacoes] = useState(true);
-  const [user, setUser] = useState("")
+  const [user, setUser] = useState("");
+  const [isModalUserOpen, setIsModalUserOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userData, setUserData] = useState([]);
+  const token = localStorage.getItem("access_token");
+
   useEffect(() => {
-    const userData = authService.getUser();
-    setUser(userData);
+    const userData = JSON.parse(localStorage.getItem("user"));
+    if (userData) {
+      setUser(userData);
+    }
   }, []);
+
+  useEffect(() => {
+    if (user && user.id) {
+      handleGetUser(user);
+    }
+  }, [user]);
+
+  async function handleGetUser(user) {
+    try {
+      const response = await fetch(`http://localhost:3000/user/${user.id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao buscar usuário por id");
+      }
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  function handleUpdate(user) {
+    console.log(user);
+    setSelectedUser(user);
+    setIsModalUserOpen(true);
+  }
+
+  function formatPhone(phone) {
+    if (!phone) return "";
+    const cleaned = phone.replace(/\D/g, ""); // remove tudo que não é número
+
+    // Se o número tiver 11 dígitos (DDD + número)
+    if (cleaned.length === 11) {
+      return `+55 (${cleaned.slice(0, 2)}) ${cleaned.slice(
+        2,
+        7
+      )}-${cleaned.slice(7)}`;
+    }
+
+    // Se tiver 10 dígitos (sem o 9 na frente)
+    if (cleaned.length === 10) {
+      return `+55 (${cleaned.slice(0, 2)}) ${cleaned.slice(
+        2,
+        6
+      )}-${cleaned.slice(6)}`;
+    }
+
+    // Caso não bata nenhum formato, retorna o número cru
+    return `+55 ${cleaned}`;
+  }
+
   return (
     <div>
       <header>
@@ -27,13 +88,16 @@ export default function MyProfile() {
           />
           <div className="pl-[20px]">
             <h3 className="text-[#434966] text-[16px] font-bold">
-             {user.name}
+              {userData.name}
             </h3>
-            <p className="text-[#82889c]">{user.sector}</p>
+            <p className="text-[#82889c]">{userData.functionUser}</p>
           </div>
         </div>
         <div>
-          <button className="border border-solid border-[#434966] w-[117px] h-[40px] rounded-lg flex justify-around items-center mr-[15px] cursor-pointer">
+          <button
+            onClick={() => handleUpdate(user)}
+            className="border border-solid border-[#434966] w-[117px] h-[40px] rounded-lg flex justify-around items-center mr-[15px] cursor-pointer"
+          >
             Editar <TbPencilMinus />
           </button>
         </div>
@@ -43,10 +107,6 @@ export default function MyProfile() {
           <h3 className="text-[#434966] text-[18px] font-semibold">
             Informações Pessoais
           </h3>
-
-          <button className="border border-solid border-[#434966] w-[117px] h-[40px] rounded-lg flex justify-around items-center text-[#434966] cursor-pointer">
-            Editar <TbPencilMinus />
-          </button>
         </header>
 
         {/* Conteúdo dos dados */}
@@ -55,81 +115,54 @@ export default function MyProfile() {
             {/* Nome */}
             <div>
               <p className="text-[#9CA3AF]">Nome</p>
-              <p className="text-[#1F2937] font-medium">{user.name}</p>
+              <p className="text-[#1F2937] font-medium">{userData.name}</p>
             </div>
 
             {/* Função */}
             <div>
               <p className="text-[#9CA3AF]">Função</p>
-              <p className="text-[#1F2937] font-medium">{user.sector}</p>
+              <p className="text-[#1F2937] font-medium">
+                {userData.functionUser}
+              </p>
             </div>
 
             {/* Telefone */}
             <div>
               <p className="text-[#9CA3AF]">Telefone</p>
-              <p className="text-[#1F2937] font-medium">+55 (31) 99999-9999</p>
+              <p className="text-[#1F2937] font-medium">
+                {formatPhone(userData.phone)}
+              </p>
             </div>
 
             {/* E-mail */}
             <div>
               <p className="text-[#9CA3AF]">E-mail</p>
-              <p className="text-[#1F2937] font-medium">{user.email}</p>
+              <p className="text-[#1F2937] font-medium">{userData.email}</p>
             </div>
 
             {/* Setor */}
             <div>
               <p className="text-[#9CA3AF]">Setor</p>
-              <p className="text-[#1F2937] font-medium">{user.sector}</p>
+              <p className="text-[#1F2937] font-medium">{userData.sector}</p>
             </div>
             {/* Tipo de usuario */}
             <div>
               <p className="text-[#9CA3AF]">Tipo de usuario</p>
-              <p className="text-[#1F2937] font-medium">{user.role}</p>
+              <p className="text-[#1F2937] font-medium">{userData.role}</p>
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="border border-solid border-[#0000001A] rounded-lg w-[90%] h-[127px] items-center flex mt-[20px]">
-        <div>
-          <div className="flex justify-between items-center px-[20px]">
-            <h3 className="text-[#1F2937] text-[16px] font-semibold">
-              Informações Gerais
-            </h3>
-          </div>
-
-          <div className="flex items-center justify-between px-[20px] mt-[10px]">
-            {/* Alterar senha */}
-            <div className="flex items-center gap-3">
-              <p className="text-[#1F2937] font-medium">Alterar Senha</p>
-              <button className="border border-[#2D9CDB] text-[#2D9CDB] text-[14px] font-medium px-3 py-1 rounded-md hover:bg-[#E6F4FA] transition cursor-pointer">
-                Alterar
-              </button>
-            </div>
-
-            {/* Divisor vertical */}
-            <div className="h-6 w-[1px] bg-[#E5E7EB] mx-6"></div>
-
-            {/* Notificações */}
-            <div className="flex items-center gap-3">
-              <p className="text-[#1F2937] font-medium">Notificações</p>
-
-              {/* Switch simples em Tailwind */}
-              <button
-                onClick={() => setNotificacoes(!notificacoes)}
-                className={`relative inline-flex h-5 w-10 items-center rounded-full transition ${
-                  notificacoes ? "bg-[#2D9CDB]" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                    notificacoes ? "translate-x-5" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
+        {selectedUser && (
+          <ModalUser
+            isOpen={isModalUserOpen}
+            onClose={() => setIsModalUserOpen(false)}
+            user={selectedUser}
+            onUpdated={(updateUser) => {
+              setUser(updateUser);
+              localStorage.setItem("user", JSON.stringify(updateUser));
+            }}
+          />
+        )}
       </section>
     </div>
   );

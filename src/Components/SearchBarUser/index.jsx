@@ -1,4 +1,4 @@
-import React ,{ useState } from "react";
+import React, { useState } from "react";
 import { FiSearch } from "react-icons/fi";
 
 export default function SearchBar({ onSearch }) {
@@ -7,26 +7,24 @@ export default function SearchBar({ onSearch }) {
 
   function handleSearch(e) {
     e.preventDefault();
-    
-    // ✅ Chama a função de busca passando os filtros
+
     onSearch({ name, email });
   }
 
   function handleClear() {
     setName("");
     setEmail("");
-    onSearch({ name: "", email: "" });
+    onSearch({ name: "", email: "" }); 
   }
 
   return (
-    <form 
+    <form
       onSubmit={handleSearch}
       className="flex items-end gap-4 bg-white p-4 rounded-lg shadow-sm"
     >
-      {/* Campo Nome */}
       <div className="flex-1">
-        <label 
-          htmlFor="name" 
+        <label
+          htmlFor="name"
           className="block text-sm font-medium text-gray-700 mb-1"
         >
           Nome
@@ -41,10 +39,9 @@ export default function SearchBar({ onSearch }) {
         />
       </div>
 
-      {/* Campo E-mail */}
       <div className="flex-1">
-        <label 
-          htmlFor="email" 
+        <label
+          htmlFor="email"
           className="block text-sm font-medium text-gray-700 mb-1"
         >
           E-mail
@@ -59,7 +56,6 @@ export default function SearchBar({ onSearch }) {
         />
       </div>
 
-      {/* Botões */}
       <div className="flex gap-2">
         <button
           type="submit"

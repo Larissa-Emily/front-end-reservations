@@ -4,7 +4,6 @@ import ProtectedRoute from "../Components/ProtectedRoute/protectedRoute"
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import Layout from "../layouts/layout";
-import Calendar from "../pages/Calendar";
 import Profile from "../pages/Profile";
 import Reserve from "../pages/Reserve";
 import User from "../pages/User";
@@ -22,14 +21,6 @@ export default function RoutesApp() {
             element={
               <ProtectedRoute>
                 <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              <ProtectedRoute>
-                <Calendar />
               </ProtectedRoute>
             }
           />

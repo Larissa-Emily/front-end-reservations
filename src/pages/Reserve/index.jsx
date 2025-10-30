@@ -1,80 +1,98 @@
 // src/pages/Reserve/index.jsx
 import React, { useState, useEffect } from "react";
-import { reservationService } from "../../services/reserve.service"; // ← CAMINHO CORRETO para o serviço de reserva
-import { authService } from "../../services/auth.service";
-import ModalReservation from "../../components/ModalReserve/index"; // ← CAMINHO CORRETO para o modal
-export default function ReservePage() {
-  // Renomeado para ReservePage
+import ModalReservation from "../../Components/ModalReserve/index.jsx";
+import { toast } from "react-toastify";
+// import SearchReservation from "../../Components/SearchReservation";
+export default function Reserve() {
   const [user, setUser] = useState(null); // O usuário será carregado aqui
   const [reservations, setReservations] = useState([]);
   const [loadingReservations, setLoadingReservations] = useState(true);
   const [errorReservations, setErrorReservations] = useState(null);
   const [isModalReservationOpen, setIsModalReservationOpen] = useState(false);
   const [reservationToEdit, setReservationToEdit] = useState(null);
-  const [viewMode, setViewMode] = useState("my"); // Padrão para "Minhas Reservas" para usuários comuns
+
+  const [filterDate, setFilterDate] = useState("");
+  const [filterUser, setFilterUser] = useState("");
+  const [filterRoom, setFilterRoom] = useState("");
+  const [filteredReservas, setFilteredReservas] = useState([]);
+  const token = localStorage.getItem("access_token");
 
   useEffect(() => {
-    const currentUser = authService.getUserFromStorage();
-    if (!currentUser) {
-      // Redirecionar para login se não estiver logado
-      // Ou lidar com o estado de não logado
-      console.log("[ReservePage] Usuário não logado.");
-      setUser(null);
-      setLoadingReservations(false);
+    if (!token) {
+      console.warn("Nenhum token encontrado — usuário não autenticado.");
       return;
     }
-    setUser(currentUser);
-    // Managers podem ver todas as reservas por padrão, usuários veem as suas
-    if (authService.isManager()) {
-      setViewMode("all");
-    } else {
-      setViewMode("my");
+    const userData = JSON.parse(localStorage.getItem("user"));
+    if (userData) {
+      setUser(userData);
     }
-  }, []); // Executa apenas uma vez ao montar o componente
+    fetchReservations();
+  }, [token]);
 
   useEffect(() => {
-    if (user) {
-      // Só busca se o usuário estiver carregado
-      fetchReservations();
+    if (!filterDate && !filterUser && !filterRoom) {
+      setFilteredReservas([]);
+      return;
     }
-  }, [viewMode, user]); // Adiciona user como dependência
+
+    let filtered = reservations;
+    if (filterDate) {
+      filtered = filtered.filter((r) => r.date === filterDate);
+    }
+    if (filterUser) {
+      filtered = filtered.filter((r) =>
+        r.user.name.toLowerCase().includes(filterUser.toLowerCase())
+      );
+    }
+    if (filterRoom) {
+      filtered = filtered.filter((r) =>
+        r.room.name.toLowerCase().includes(filterRoom.toLowerCase())
+      );
+    }
+    setFilteredReservas(filtered);
+  }, [filterDate, filterUser, filterRoom, reservations]);
+
+  const handleApplyFilters = () => {
+    let filtered = reservations;
+
+    if (filterDate) {
+      filtered = filtered.filter((r) => r.date === filterDate);
+    }
+    if (filterUser) {
+      filtered = filtered.filter((r) =>
+        r.user.name.toLowerCase().includes(filterUser.toLowerCase())
+      );
+    }
+    if (filterRoom) {
+      filtered = filtered.filter((r) =>
+        r.room.name.toLowerCase().includes(filterRoom.toLowerCase())
+      );
+    }
+
+    setFilteredReservas(filtered);
+  };
 
   const fetchReservations = async () => {
-    console.log("[ReservePage] fetchReservations called.");
     setLoadingReservations(true);
     setErrorReservations(null);
     try {
-      let fetchedReservations;
-      if (viewMode === "my" && user) {
-        console.log(
-          `[ReservePage] Fetching user reservations for ID: ${user.id}`
-        );
-        fetchedReservations = await reservationService.getUserReservations(
-          user.id
-        );
-      } else if (viewMode === "all" && authService.isManager()) {
-        console.log("[ReservePage] Fetching all reservations (manager).");
-        fetchedReservations = await reservationService.getAllReservations();
-      } else {
-        // Fallback para usuários não-manager que tentem ver "all" ou sem user
-        fetchedReservations = [];
-        setErrorReservations(
-          "Você não tem permissão para ver todas as reservas ou o usuário não está logado."
-        );
+      const response = await fetch(`http://localhost:3000/reservation`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao buscar as reservas");
       }
-      console.log(
-        "[ReservePage] Fetched reservations successfully:",
-        fetchedReservations
-      );
-      setReservations(fetchedReservations);
+
+      const data = await response.json();
+      setReservations(data);
     } catch (error) {
-      console.error("❌ [ReservePage] Erro ao buscar reservas:", error);
-      setErrorReservations(error.message || "Erro ao carregar reservas.");
+      setErrorReservations(error.message);
     } finally {
       setLoadingReservations(false);
-      console.log(
-        "[ReservePage] fetchReservations finished. Loading state set to false."
-      );
     }
   };
 
@@ -91,12 +109,25 @@ export default function ReservePage() {
   const handleCancelReservation = async (reservationId) => {
     if (window.confirm("Tem certeza que deseja cancelar esta reserva?")) {
       try {
-        await reservationService.cancelReservation(reservationId);
-        alert("Reserva cancelada com sucesso!");
+        const response = await fetch(
+          `http://localhost:3000/reservation/${reservationId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Erro ao deletar a reserva!");
+        }
+        toast.error("Reserva cancelada com sucesso!");
         fetchReservations();
       } catch (error) {
         console.error("❌ Erro ao cancelar reserva:", error);
-        alert(error.message || "Erro ao cancelar reserva.");
+        toast.error(error.message || "Erro ao cancelar reserva.");
       }
     }
   };
@@ -166,7 +197,6 @@ export default function ReservePage() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center text-[#7a7d84]">
-        
         Carregando informações do usuário...
       </div>
     );
@@ -178,6 +208,52 @@ export default function ReservePage() {
         <h3 className="font-bold text-[32px] text-[#232323]">Reservar sala</h3>
       </div>
       <div className="min-h-screen p-8 border border-solid border-[#0000001A] rounded-lg">
+        <div className="mb-6 flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1">
+            <label className="block mb-1 font-medium text-gray-700">Data</label>
+            <input
+              type="date"
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B9AB8]"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+            />
+          </div>
+
+          <div className="flex-1">
+            <label className="block mb-1 font-medium text-gray-700">
+              Nome do usuário
+            </label>
+            <input
+              type="text"
+              placeholder="Nome do usuário"
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B9AB8]"
+              value={filterUser}
+              onChange={(e) => setFilterUser(e.target.value)}
+            />
+          </div>
+
+          <div className="flex-1">
+            <label className="block mb-1 font-medium text-gray-700">
+              Nome da sala
+            </label>
+            <input
+              type="text"
+              placeholder="Nome da sala"
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B9AB8]"
+              value={filterRoom}
+              onChange={(e) => setFilterRoom(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <button
+              onClick={handleApplyFilters}
+              className="bg-[#3B9AB8] hover:bg-[#035c77] text-white font-semibold py-2 px-4 rounded-md transition-all duration-200"
+            >
+              Filtrar
+            </button>
+          </div>
+        </div>
         <div className="flex justify-end items-center mb-6">
           <button
             onClick={handleOpenCreateReservationModal}
@@ -186,114 +262,93 @@ export default function ReservePage() {
             Nova Reserva
           </button>
         </div>
-        {authService.isManager() && (
-          <div className="flex justify-center gap-4 mb-10">
-            <button
-              onClick={() => setViewMode("all")}
-              className={`px-4 py-2 rounded-md transition-all ${
-                viewMode === "all"
-                  ? "bg-[#3B9AB8] text-white"
-                  : "bg-white/1 text-[#3B9AB8] hver:bg-white/2"
-              } cursor-pointer`}
-            >
-              Todas as Reservas
-            </button>
-            <button
-              onClick={() => setViewMode("my")}
-              className={`px-4 py-2 rounded-md transition-all ${
-                viewMode === "my"
-                  ? "bg-[#3B9AB8] text-white"
-                  : "bg-white/1 text-[#3B9AB8] hver:bg-white/2"
-              } cursor-pointer`}
-            >
-              Minhas Reservas
-            </button>
-          </div>
-        )}
         {loadingReservations && (
           <p className="text-[#7a7d84]">Carregando reservas...</p>
         )}
         {errorReservations && (
           <p className="text-red-400">Erro: {errorReservations}</p>
         )}
-        {!loadingReservations &&
-          reservations.length === 0 &&
-          !errorReservations && (
-            <p className="text-[#7a7d84]">
-              
-              {viewMode === "my"
-                ? "Você não tem reservas."
-                : "Nenhuma reserva encontrada."}
-            </p>
-          )}
         {!loadingReservations && reservations.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {reservations.map((reservation) => (
-              <div
-                key={reservation.id}
-                className="p-6 rounded-lg shadow-md  w-[360px] h-[259px]"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold text-[#000]">
-                    {reservation.room.name}
-                  </h3>
-                  <span
-                    className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                      reservation
-                    )}`}
-                  >
-                    {getStatusText(reservation)}
-                  </span>
+            {(filteredReservas.length > 0 ||
+            filterDate ||
+            filterUser ||
+            filterRoom
+              ? filteredReservas
+              : reservations
+            )
+              // 🔹 Exibe apenas reservas que não estão concluídas
+              .filter(
+                (reservation) => getStatusText(reservation) !== "Concluída"
+              )
+              .map((reservation) => (
+                <div
+                  key={reservation.id}
+                  className="p-6 rounded-lg shadow-md  w-[360px] h-[259px]"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-semibold text-[#000]">
+                      {reservation.room.name}
+                    </h3>
+                    <span
+                      className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                        reservation
+                      )}`}
+                    >
+                      {getStatusText(reservation)}
+                    </span>
+                  </div>
+                  <div className="space-y-2 mb-4">
+                    <p className="text-[#7A7D84]">
+                      <span className="font-medium">Data:</span>
+                      {formatDate(reservation.date)}
+                    </p>
+                    <p className="text-[#7A7D84]">
+                      <span className="font-medium">Horário:</span>
+                      {formatTime(reservation.startTime)} -
+                      {formatTime(reservation.endTime)}
+                    </p>
+                    <p className="text-[#7A7D84]">
+                      <span className="font-medium">Local:</span>
+                      {reservation.room.location || "N/A"}
+                    </p>
+                    <p className="text-[#7A7D84]">
+                      <span className="font-medium">Responsável:</span>
+                      {reservation.user.name}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() =>
+                        handleOpenEditReservationModal(reservation)
+                      }
+                      disabled={getStatusText(reservation) === "Concluída"}
+                      className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                        getStatusText(reservation) === "Concluída"
+                          ? "bg-gray-500 text-gray-300 cursor-not-allowed"
+                          : "bg-[#3B9AB8] hover:bg-yellow-600 text-white"
+                      }`}
+                    >
+                      {getStatusText(reservation) === "Concluída"
+                        ? "Concluída"
+                        : "Editar"}
+                    </button>
+                    <button
+                      onClick={() => handleCancelReservation(reservation.id)}
+                      disabled={getStatusText(reservation) === "Concluída"}
+                      className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                        getStatusText(reservation) === "Concluída"
+                          ? "bg-gray-500 text-gray-300 cursor-not-allowed"
+                          : "bg-red-500 hover:bg-red-600 text-white"
+                      }`}
+                    >
+                      {getStatusText(reservation) === "Concluída"
+                        ? "Concluída"
+                        : "Cancelar"}
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-2 mb-4">
-                  <p className="text-[#7A7D84]">
-                    <span className="font-medium">Data:</span>
-                    {formatDate(reservation.date)}
-                  </p>
-                  <p className="text-[#7A7D84]">
-                    <span className="font-medium">Horário:</span>
-                    {formatTime(reservation.startTime)} -
-                    {formatTime(reservation.endTime)}
-                  </p>
-                  <p className="text-[#7A7D84]">
-                    <span className="font-medium">Local:</span>
-                    {reservation.room.location || "N/A"}
-                  </p>
-                  <p className="text-[#7A7D84]">
-                    <span className="font-medium">Responsável:</span>
-                    {reservation.user.name}
-                  </p>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={() => handleOpenEditReservationModal(reservation)}
-                    disabled={getStatusText(reservation) === "Concluída"}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
-                      getStatusText(reservation) === "Concluída"
-                        ? "bg-gray-500 text-gray-300 cursor-not-allowed"
-                        : "bg-[#3B9AB8] hover:bg-yellow-600 text-white"
-                    }`}
-                  >
-                    {getStatusText(reservation) === "Concluída"
-                      ? "Concluída"
-                      : "Editar"}
-                  </button>
-                  <button
-                    onClick={() => handleCancelReservation(reservation.id)}
-                    disabled={getStatusText(reservation) === "Concluída"}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
-                      getStatusText(reservation) === "Concluída"
-                        ? "bg-gray-500 text-gray-300 cursor-not-allowed"
-                        : "bg-red-500 hover:bg-red-600 text-white"
-                    }`}
-                  >
-                    {getStatusText(reservation) === "Concluída"
-                      ? "Concluída"
-                      : "Cancelar"}
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
         <ModalReservation

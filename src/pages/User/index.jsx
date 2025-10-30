@@ -3,12 +3,16 @@ import { useState, useEffect } from "react";
 import SearchBarUser from "../../Components/SearchBarUser";
 import ModalRegister from "../../Components/Modal";
 import ModalConfirm from "../../Components/ModalConfirm";
-import { authService } from "../../services/auth.service";
+import ModalUser from "../../Components/ModalUser";
 
 export default function User() {
+  const token = localStorage.getItem("access_token")
   const [usuarios, setUsuarios] = useState([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Estados do Modal Update
+  const [isModalUserOpen, setIsModalUserOpen] = useState(false);
 
   // Estados dos modais
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -21,23 +25,36 @@ export default function User() {
     fetchUsuarios();
   }, []);
 
-  async function fetchUsuarios() {
+  async function fetchUsuarios() { // testada e funcionando - lista todos os usuarios
     try {
       setLoading(true);
-      const response = await authService.fetch("/user");
+      const response = await fetch(`http://localhost:3000/user`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Erro ao buscar usuários");
-      }
+        return;
+      } 
 
       const data = await response.json();
       setUsuarios(data);
       setFilteredUsuarios(data);
     } catch (error) {
-      alert("Erro ao carregar usuários!");
+      toast.error("Erro ao carregar usuários!");
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleUpdate(user) {
+    console.log(user)
+    setSelectedUser(user);
+    setIsModalUserOpen(true);
   }
 
   function handleSearch(filters) {
@@ -65,11 +82,15 @@ export default function User() {
   }
 
   //  Deleta o usuário
-  async function handleDelete() {
+  async function handleDelete() { 
     try {
-      const response = await authService.fetch(`/user/${selectedUser.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(`http://localhost:3000/user/${selectedUser.id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
       if (!response.ok) {
         throw new Error("Erro ao deletar usuário");
@@ -92,7 +113,7 @@ export default function User() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-8 mt-[20px] bg-gray-50 min-h-screen">
       {/* Cabeçalho */}
       <div className="mb-6 flex justify-between items-center">
         <div>
@@ -112,7 +133,7 @@ export default function User() {
           onClick={() => setIsRegisterOpen(true)}
           className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 "
         >
-          + Novo 
+          + Novo
         </button>
       </div>
 
@@ -129,6 +150,9 @@ export default function User() {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Setor
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Função
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Tipo de usuário
@@ -163,6 +187,11 @@ export default function User() {
                     <div className="text-sm text-gray-600">{user.sector}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-600">
+                      {user.functionUser}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         user.role === "manager"
@@ -174,7 +203,10 @@ export default function User() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button className="text-blue-600 hover:text-blue-800 font-medium mr-4 transition-colors">
+                    <button
+                      onClick={() => handleUpdate(user)}
+                      className="text-blue-600 hover:text-blue-800 font-medium mr-4 transition-colors"
+                    >
                       Editar
                     </button>
 
@@ -201,6 +233,15 @@ export default function User() {
           fetchUsuarios();
         }}
       />
+      {/* ✅ Modal de Edição de Usuário */}
+      {selectedUser && (
+        <ModalUser
+          isOpen={isModalUserOpen}
+          onClose={() => setIsModalUserOpen(false)}
+          user={selectedUser}
+          onUpdated={fetchUsuarios}
+        />
+      )}
 
       {/* ✅ Modal de Confirmação de Exclusão */}
       {selectedUser && (

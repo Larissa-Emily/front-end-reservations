@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
-import { roomService } from "../../services/room.service"; // Importa o serviço de salas
+import { toast } from "react-toastify";
 
 export default function ModalRoom({ isOpen, onClose, roomToEdit, onSave }) {
   const [name, setName] = useState("");
@@ -10,6 +10,7 @@ export default function ModalRoom({ isOpen, onClose, roomToEdit, onSave }) {
   const [isAvailable, setIsAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const token = localStorage.getItem("access_token");
 
   // Preenche o formulário se for para editar uma sala
   useEffect(() => {
@@ -43,7 +44,6 @@ export default function ModalRoom({ isOpen, onClose, roomToEdit, onSave }) {
       return;
     }
 
-    setLoading(true);
     const roomData = {
       name,
       description: description || null,
@@ -53,20 +53,40 @@ export default function ModalRoom({ isOpen, onClose, roomToEdit, onSave }) {
     };
 
     try {
+      // rotas testadas
+      setLoading(true);
       let result;
       if (roomToEdit) {
         // Atualiza sala existente
-        result = await roomService.updateRoom(roomToEdit.id, roomData);
-        alert("Sala atualizada com sucesso!");
+        result = await fetch(`http://localhost:3000/room/${roomToEdit.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(roomData),
+        });
+
+        toast.success("Sala atualizada com sucesso!");
       } else {
-        // Cria nova sala
-        result = await roomService.createRoom(roomData);
-        alert("Sala criada com sucesso!");
+        result = await fetch(`http://localhost:3000/room`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(roomData),
+        });
+
+        toast.success("Sala criada com sucesso!");
       }
-      onSave(result); // Chama a função onSave para atualizar a lista no Dashboard
+
+
+      const savedRoom = await result.json();
+      onSave(savedRoom);
       onClose(); // Fecha o modal
     } catch (err) {
-      console.error("❌ Erro ao salvar sala:", err);
+      console.error("Erro ao salvar sala");
       setError(err.message || "Erro ao salvar sala.");
     } finally {
       setLoading(false);
@@ -77,16 +97,13 @@ export default function ModalRoom({ isOpen, onClose, roomToEdit, onSave }) {
 
   return (
     <>
-      {/* Overlay (fundo escuro) */}
       <div
         className="fixed inset-0 bg-[#0e48868f] bg-opacity-50 z-40"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <div className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl w-full max-w-md text-center border border-white/20 relative">
-          {/* Botão fechar */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
@@ -98,7 +115,9 @@ export default function ModalRoom({ isOpen, onClose, roomToEdit, onSave }) {
             {roomToEdit ? "Editar Sala" : "Criar Nova Sala"}
           </h1>
           <span className="text-white/80 text-sm mb-6 block">
-            {roomToEdit ? "Atualize os dados da sala" : "Preencha os dados da nova sala"}
+            {roomToEdit
+              ? "Atualize os dados da sala"
+              : "Preencha os dados da nova sala"}
           </span>
 
           {error && (
@@ -164,7 +183,11 @@ export default function ModalRoom({ isOpen, onClose, roomToEdit, onSave }) {
               disabled={loading}
               className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Salvando..." : roomToEdit ? "Atualizar Sala" : "Criar Sala"}
+              {loading
+                ? "Salvando..."
+                : roomToEdit
+                ? "Atualizar Sala"
+                : "Criar Sala"}
             </button>
           </form>
         </div>
