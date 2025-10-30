@@ -1,6 +1,6 @@
 # 📘 Documentação Técnica do Sistema de Reservas de Salas de Reunião
 ## 🧩 Visão Geral do Projeto
-Este projeto é uma aplicação web completa, desenvolvida com React.js no front-end, NestJS no back-end e PostgreSQL como banco de dados relacional. Todo o ambiente é containerizado via Docker, garantindo isolamento, fácil manutenção e portabilidade entre ambientes de desenvolvimento e produção.
+Este projeto é uma aplicação web completa, desenvolvida com React.js no front-end, NestJS no back-end e PostgreSQL como banco de dados relacional.
 A aplicação foi idealizada para ser modular, escalável e segura, oferecendo uma base sólida para futuras expansões — seja com novas funcionalidades, módulos ou integrações externas.
 ________________________________________
 ## 🌐 Estrutura de Rotas
@@ -59,18 +59,6 @@ o	Permissões de acesso via @Roles().
 •	Testes de integração entre módulos para validar a comunicação entre entidades (por exemplo, reservas vinculadas a usuários e salas).
 O uso do Jest proporcionou confiança no código, detecção rápida de regressões e mais segurança ao realizar refatorações.
 ________________________________________
-## 🧱 Banco de Dados e Integração com Docker
-O banco de dados PostgreSQL é executado dentro de um container Docker, garantindo isolamento e facilidade de configuração.
-Vantagens:
-•	Subida e remoção de instâncias com um único comando (docker-compose up).
-•	Isolamento total do ambiente local.
-•	Facilitação no deploy e migração entre ambientes.
-Principais tabelas:
-•	users: informações de login, dados pessoais e roles.
-•	rooms: cadastro e características das salas.
-•	reservations: vínculo entre usuários, salas e horários.
-O arquivo docker-compose.yml orquestra os containers do NestJS, PostgreSQL e (opcionalmente) pgAdmin, automatizando toda a inicialização do ambiente.
-________________________________________
 ## ⚙️ Comando para instalar todas as dependências
 
 # 1️⃣ Inicializa o projeto
@@ -100,9 +88,9 @@ Esses pontos representaram um avanço significativo para mim como desenvolvedora
 ________________________________________
 ## 🧠 Conclusão
 Este projeto vai além de uma aplicação funcional — ele representa um estudo prático sobre arquitetura moderna, segurança e automação.
-O uso de tecnologias como React, NestJS, JWT, Jest, PostgreSQL e Docker consolidou uma base sólida, escalável e segura, pronta para evoluir com novas funcionalidades e integrações.
+O uso de tecnologias como React, NestJS, JWT, Jest, PostgreSQL  consolidou uma base sólida, escalável e segura, pronta para evoluir com novas funcionalidades e integrações.
 Mais do que um sistema de reservas, este projeto simboliza o amadurecimento profissional em todo o ciclo de desenvolvimento web: da concepção ao deploy.
 ________________________________________
 📅 Data da Documentação: 29 de outubro de 2025
 👤 Autora: Larissa Emily
-🧠 Stacks Principais: React.js • TailwindCSS • NestJS • PostgreSQL • Docker • Jest • JWT
+🧠 Stacks Principais: React.js • TailwindCSS • NestJS • PostgreSQL  • Jest • JWT
