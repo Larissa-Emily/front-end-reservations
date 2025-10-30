@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import RoomImage from "../../assets/roomImage.jpg";
-import { FiMapPin } from "react-icons/fi"; // Removi FiCalendar, pois não está sendo usado
+import { FiMapPin } from "react-icons/fi"; 
 
 export default function Dashboard() {
   const [roomsAvailable, setRoomsAvailable] = useState([]);
@@ -9,7 +9,6 @@ export default function Dashboard() {
   const token = localStorage.getItem("access_token");
   useEffect(() => {
     if (!token) {
-      console.log("Nenhum token encontrado — usuário não autenticado.");
       return;
     }
     fetchRoomsAvailable();
@@ -27,14 +26,12 @@ export default function Dashboard() {
 
       if (!fetchedRooms.ok) {
         throw new Error("Erro ao listar salas disponiveis");
-        return;
       }
 
       const data = await fetchedRooms.json();
-      console.log(`Recebendo as salavas habilitadas: ${data}`);
       setRoomsAvailable(data);
     } catch (error) {
-      console.error("❌ Erro ao buscar salas:", error);
+      console.error("Erro ao buscar salas:", error);
     }
   };
 
@@ -49,7 +46,6 @@ export default function Dashboard() {
 
       if (!fetchedMeetings.ok) {
         throw new Error("Erro ao listar reservas");
-        return;
       }
 
       const data = await fetchedMeetings.json();
@@ -141,20 +137,17 @@ export default function Dashboard() {
                 <p className="text-[#7a7d84]">Nenhuma reunião agendada.</p>
               ) : (
                 meetings
-                  // 🔹 Filtra apenas as reuniões futuras
                   .filter((meeting) => {
                     const meetingDateTime = new Date(
                       `${meeting.date}T${meeting.startTime}`
                     );
-                    return meetingDateTime > new Date(); // mantém apenas futuras
+                    return meetingDateTime > new Date();
                   })
-                  // 🔹 Ordena por data/hora
                   .sort(
                     (a, b) =>
                       new Date(`${a.date}T${a.startTime}`) -
                       new Date(`${b.date}T${b.startTime}`)
                   )
-                  // 🔹 Mostra apenas as 3 próximas
                   .slice(0, 3)
                   .map((meeting) => (
                     <div

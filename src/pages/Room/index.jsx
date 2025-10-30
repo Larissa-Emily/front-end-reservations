@@ -12,7 +12,7 @@ export default function RoomList() {
   const [filters, setFilters] = useState({
     name: "",
     capacity: "",
-    characteristics: "", // Mapeia para 'description' ou outra característica
+    characteristics: "", 
     location: "",
   });
   const token = localStorage.getItem("access_token");
@@ -42,10 +42,8 @@ export default function RoomList() {
         throw new Error("Erro ao buscar salas.");
       }
       const data = await fetchedRooms.json();
-      console.log("Recebendo as salas", +data);
       setRooms(data);
     } catch (error) {
-      console.error("❌ Erro ao buscar salas:", error);
       setErrorRooms(error.message || "Erro ao carregar salas.");
     } finally {
       setLoadingRooms(false);
@@ -66,7 +64,6 @@ export default function RoomList() {
     if (window.confirm("Tem certeza que deseja deletar esta sala?")) {
       try {
         const response = await fetch(`http://localhost:3000/room/${roomId}`, {
-          // testada e funcionando - deleta as reservas que estao na sala
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -80,7 +77,6 @@ export default function RoomList() {
         toast.success("Sala deletada com sucesso!");
         fetchRooms();
       } catch (error) {
-        console.error("❌ Erro ao deletar sala:", error);
         toast.error(error.message || "Erro ao deletar sala.");
       }
     }
@@ -95,7 +91,6 @@ export default function RoomList() {
     setFilters(newFilters);
   };
 
-  // Lógica de filtro: filtra as salas com base nos múltiplos filtros
   const filteredRooms = rooms.filter((room) => {
     const matchName = filters.name
       ? room.name.toLowerCase().includes(filters.name.toLowerCase())
@@ -122,7 +117,6 @@ export default function RoomList() {
       </div>
       <div className="mt-8 border-1 border-[#7a7d8439] rounded-lg h-[600px] p-[25px]">
         <div className="flex flex-col  mb-6 p-[20px]">
-          {/* Passa a função handleSearch para o SearchBar */}
           <SearchBar onSearch={handleSearch} />
           <div className="flex justify-end">
             {currentUserRole === "manager" && (
@@ -192,7 +186,6 @@ export default function RoomList() {
             ))}
           </div>
         )}
-        {/* Modal para Criar/Editar Salas */}
         <ModalRoom
           isOpen={isModalRoomOpen}
           onClose={() => setIsModalRoomOpen(false)}

@@ -11,7 +11,6 @@ export default function Profile() {
             <h3 className="font-bold text-[32px] text-[#232323]">Perfil</h3>
         </div>
       <div className="flex border border-solid border-[#0000001A] rounded-lg">
-        {/* Abas laterais */}
         <div className="w-[350px] h-[728px] border-r border-gray-300 text-[#7a7d84] p-[24px] rounded-lg">
           <button
             className={`w-full p-4 text-left ${

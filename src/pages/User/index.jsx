@@ -25,7 +25,7 @@ export default function User() {
     fetchUsuarios();
   }, []);
 
-  async function fetchUsuarios() { // testada e funcionando - lista todos os usuarios
+  async function fetchUsuarios() {
     try {
       setLoading(true);
       const response = await fetch(`http://localhost:3000/user`, {
@@ -38,7 +38,6 @@ export default function User() {
 
       if (!response.ok) {
         throw new Error("Erro ao buscar usuários");
-        return;
       } 
 
       const data = await response.json();
@@ -75,13 +74,11 @@ export default function User() {
     setFilteredUsuarios(filtered);
   }
 
-  //  modal de confirmar exclusão
   function handleDeleteClick(user) {
     setSelectedUser(user);
     setIsDeleteOpen(true);
   }
 
-  //  Deleta o usuário
   async function handleDelete() { 
     try {
       const response = await fetch(`http://localhost:3000/user/${selectedUser.id}`, {
@@ -114,7 +111,6 @@ export default function User() {
 
   return (
     <div className="p-8 mt-[20px] bg-gray-50 min-h-screen">
-      {/* Cabeçalho */}
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
@@ -126,7 +122,6 @@ export default function User() {
         </div>
       </div>
 
-      {/* Barra de Busca */}
       <SearchBarUser onSearch={handleSearch} />
       <div className="flex justify-end p-[20px]">
         <button
@@ -137,7 +132,6 @@ export default function User() {
         </button>
       </div>
 
-      {/* Tabela de Usuários */}
       <div className="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
@@ -225,7 +219,6 @@ export default function User() {
         </table>
       </div>
 
-      {/* ✅ Modal de Cadastro */}
       <ModalRegister
         isOpen={isRegisterOpen}
         onClose={() => {
@@ -233,7 +226,6 @@ export default function User() {
           fetchUsuarios();
         }}
       />
-      {/* ✅ Modal de Edição de Usuário */}
       {selectedUser && (
         <ModalUser
           isOpen={isModalUserOpen}
@@ -243,7 +235,6 @@ export default function User() {
         />
       )}
 
-      {/* ✅ Modal de Confirmação de Exclusão */}
       {selectedUser && (
         <ModalConfirm
           isOpen={isDeleteOpen}

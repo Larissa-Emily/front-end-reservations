@@ -126,14 +126,12 @@ export default function Reserve() {
         toast.error("Reserva cancelada com sucesso!");
         fetchReservations();
       } catch (error) {
-        console.error("❌ Erro ao cancelar reserva:", error);
         toast.error(error.message || "Erro ao cancelar reserva.");
       }
     }
   };
 
   const handleReservationSave = (savedReservation) => {
-    // Atualiza a lista de reservas no estado local
     if (reservationToEdit) {
       setReservations(
         reservations.map((res) =>
@@ -143,7 +141,7 @@ export default function Reserve() {
     } else {
       setReservations([...reservations, savedReservation]);
     }
-    fetchReservations(); // Recarrega as reservas para garantir a lista mais atualizada
+    fetchReservations(); 
   };
 
   const formatDate = (dateString) => {
@@ -277,7 +275,6 @@ export default function Reserve() {
               ? filteredReservas
               : reservations
             )
-              // 🔹 Exibe apenas reservas que não estão concluídas
               .filter(
                 (reservation) => getStatusText(reservation) !== "Concluída"
               )

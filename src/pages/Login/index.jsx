@@ -36,7 +36,6 @@ export default function Login() {
       toast.error("Preencha todos os campos!");
       return;
     }
-    // 🔒 Bloqueio local (caso o backend já tenha bloqueado antes)
     if (blockedUntil && blockedUntil > Date.now()) {
       const mins = getTimeRemaining();
       toast.error(
@@ -57,7 +56,6 @@ export default function Login() {
         const errorData = await response.json().catch(() => null);
         const message = errorData?.message || "Erro ao fazer login.";
 
-        // 🚨 Se mensagem de bloqueio, extrai e salva o tempo
         if (message.toLowerCase().includes("bloquead")) {
           const waitMinutes = parseInt(message.match(/(\d+)/)?.[0] || "10", 10);
           const until = Date.now() + waitMinutes * 60 * 1000;
@@ -84,7 +82,7 @@ export default function Login() {
         throw new Error("Erro ao receber dados do servidor.");
       }
     } catch (error) {
-      toast.error(error.message || "Erro ao fazer login!");
+      toast.error("Erro ao fazer login!");
     } finally {
       setLoading(false);
     }
